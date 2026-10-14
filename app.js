@@ -353,14 +353,21 @@ function el(tag, props = {}, children = []) {
 
 // ── 地圖載入 ─────────────────────────────────────────
 function loadMapsScript(key) {
+  // Google 只把確切的錯誤代碼印在 console，攔截下來顯示給手機使用者看
+  let mapsErrorCode = '';
+  let authFailed = false;
+  const origConsoleError = console.error;
+  console.error = (...args) => {
+    const m = args.map(String).join(' ').match(/\b([A-Za-z]+MapError)\b/);
+    if (m) {
+      mapsErrorCode = m[1];
+      if (authFailed) showMapsAuthError(mapsErrorCode);
+    }
+    origConsoleError.apply(console, args);
+  };
   window.gm_authFailure = () => {
-    const allowed = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}*`;
-    const ph = $('map-placeholder');
-    ph.querySelector('p').textContent =
-      `Google 拒絕了這把金鑰。請到 Google Cloud Console 確認：① 金鑰「網站限制」包含 ${allowed} ② 已啟用 Maps JavaScript API ③ 已開啟計費 ④ 金鑰沒有貼錯。`;
-    ph.classList.remove('hidden');
-    ph.style.zIndex = 7;
-    $('draw-fab').classList.add('hidden');
+    authFailed = true;
+    showMapsAuthError(mapsErrorCode);
   };
   window.onMapsLoaded = () => {
     setupMap().catch((err) => {
@@ -373,6 +380,27 @@ function loadMapsScript(key) {
   s.async = true;
   s.onerror = () => toast('無法載入 Google 地圖，請檢查網路');
   document.head.appendChild(s);
+}
+
+function showMapsAuthError(code) {
+  const allowed = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}*`;
+  const reasons = {
+    RefererNotAllowedMapError: `這個網址沒有被金鑰允許。請在金鑰的「網站限制」加入：${allowed}`,
+    ApiNotActivatedMapError: '此專案尚未啟用 Maps JavaScript API，請到 Google Cloud Console「API 和服務 → 程式庫」啟用。',
+    BillingNotEnabledMapError: '此專案尚未開啟計費，請到 Google Cloud Console「帳單」連結計費帳戶。',
+    InvalidKeyMapError: '金鑰不正確，可能貼錯或少了字元（注意大寫 I 與小寫 l）。建議從 Google Cloud Console 直接複製貼上。',
+    ApiTargetBlockedMapError: '金鑰的「API 限制」沒有勾選 Maps JavaScript API。',
+    ExpiredKeyMapError: '金鑰已過期或已被刪除，請重新建立金鑰。',
+    DeletedApiProjectMapError: '金鑰所屬的專案已被刪除，請重新建立金鑰。',
+  };
+  const detail =
+    reasons[code] ||
+    `請確認：① 金鑰「網站限制」包含 ${allowed} ② 已啟用 Maps JavaScript API ③ 已開啟計費 ④ 金鑰沒有貼錯。`;
+  const ph = $('map-placeholder');
+  ph.querySelector('p').textContent = `Google 拒絕了這把金鑰${code ? `（${code}）` : ''}。${detail}`;
+  ph.classList.remove('hidden');
+  ph.style.zIndex = 7;
+  $('draw-fab').classList.add('hidden');
 }
 
 async function setupMap() {
