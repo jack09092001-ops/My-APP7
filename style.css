@@ -112,6 +112,9 @@ header h1 {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding: 16px;
+  text-align: center;
+  word-break: break-all;
   background: #e8ecf0;
   color: var(--color-muted);
   z-index: 1;

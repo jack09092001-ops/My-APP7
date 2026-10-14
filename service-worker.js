@@ -1,7 +1,7 @@
 'use strict';
 
 // 更新任何 app 檔案後，請把版本號 +1，已安裝的使用者才會拿到新版
-const CACHE_NAME = 'route-planner-v4';
+const CACHE_NAME = 'route-planner-v5';
 const APP_SHELL = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {

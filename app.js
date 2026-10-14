@@ -354,8 +354,13 @@ function el(tag, props = {}, children = []) {
 // ── 地圖載入 ─────────────────────────────────────────
 function loadMapsScript(key) {
   window.gm_authFailure = () => {
-    toast('API 金鑰無效，或尚未啟用 Maps JavaScript API', 6000);
-    openSettings();
+    const allowed = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}*`;
+    const ph = $('map-placeholder');
+    ph.querySelector('p').textContent =
+      `Google 拒絕了這把金鑰。請到 Google Cloud Console 確認：① 金鑰「網站限制」包含 ${allowed} ② 已啟用 Maps JavaScript API ③ 已開啟計費 ④ 金鑰沒有貼錯。`;
+    ph.classList.remove('hidden');
+    ph.style.zIndex = 7;
+    $('draw-fab').classList.add('hidden');
   };
   window.onMapsLoaded = () => {
     setupMap().catch((err) => {
