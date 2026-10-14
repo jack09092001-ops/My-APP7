@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>路線地圖規劃</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#2f6fed">
+</head>
+<body>
+  <header>
+    <h1>路線地圖規劃</h1>
+    <button type="button" class="icon-btn" id="settings-btn" aria-label="設定">⚙️</button>
+  </header>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div id="draw-overlay" class="hidden"></div>
+    <button type="button" id="draw-fab" class="fab hidden" aria-pressed="false">✏️ 手繪</button>
+    <div id="map-placeholder">
+      <p>尚未設定 Google Maps API 金鑰</p>
+      <button type="button" id="placeholder-settings-btn">前往設定</button>
+    </div>
+  </div>
+
+  <section class="panel">
+    <nav class="tabs" role="tablist">
+      <button type="button" class="tab active" data-tab="draw" role="tab">繪製</button>
+      <button type="button" class="tab" data-tab="drafts" role="tab">暫存路線 <span id="drafts-count" class="badge">0</span></button>
+      <button type="button" class="tab" data-tab="saved" role="tab">我的路線 <span id="saved-count" class="badge">0</span></button>
+    </nav>
+
+    <!-- 繪製 -->
+    <div class="tab-body" id="tab-draw">
+      <p class="hint" id="draw-status">按地圖左上角「✏️ 手繪」後，用手指在地圖上畫出路線。可分多筆畫，離開手繪模式即可移動地圖。</p>
+      <div class="btn-row">
+        <button type="button" class="secondary" id="undo-btn">↶ 復原</button>
+        <button type="button" class="secondary" id="clear-btn">🗑 清除</button>
+        <button type="button" id="snap-btn">🧲 貼齊道路</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="success" id="save-draft-btn" disabled>✔ 存為暫存路線</button>
+      </div>
+    </div>
+
+    <!-- 暫存路線 -->
+    <div class="tab-body hidden" id="tab-drafts">
+      <div id="drafts-view">
+        <p class="hint" id="drafts-empty">還沒有暫存路線，先到「繪製」畫一段吧。</p>
+        <ul class="route-list" id="drafts-list"></ul>
+        <div class="btn-row sticky-actions">
+          <button type="button" id="merge-start-btn" disabled>🔗 合併 / 命名所選 (0)</button>
+        </div>
+      </div>
+
+      <div id="merge-view" class="hidden">
+        <p class="hint">調整順序（▲▼）與方向（⇄），地圖上會即時預覽。前後段若在路上交會，會直接在交會點剪接，不產生折返路線；完全沒相交的空隙在儲存時才沿道路補上。</p>
+        <ol class="route-list" id="merge-list"></ol>
+        <p class="merge-total" id="merge-total"></p>
+        <div class="field">
+          <label for="merge-name">路線名稱</label>
+          <input type="text" id="merge-name" maxlength="60" placeholder="例如：河濱環狀線">
+        </div>
+        <label class="check"><input type="checkbox" id="merge-delete-src"> 儲存後刪除原暫存路線</label>
+        <div class="btn-row">
+          <button type="button" class="secondary" id="merge-cancel-btn">取消</button>
+          <button type="button" class="success" id="merge-save-btn">💾 儲存路線</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的路線 -->
+    <div class="tab-body hidden" id="tab-saved">
+      <p class="hint" id="saved-empty">還沒有命名路線。到「暫存路線」勾選路段後合併 / 命名。</p>
+      <ul class="route-list" id="saved-list"></ul>
+    </div>
+  </section>
+
+  <dialog id="settings-dialog">
+    <form method="dialog" id="settings-form">
+      <h2>設定</h2>
+      <div class="field">
+        <label for="api-key-input">Google Maps API 金鑰</label>
+        <input type="text" id="api-key-input" autocomplete="off" spellcheck="false" placeholder="AIza...">
+        <p class="hint">此金鑰需在 Google Cloud 啟用：Maps JavaScript API、Roads API（開啟海拔需再啟用 Elevation API）。金鑰只存在這支手機的瀏覽器中。</p>
+      </div>
+      <label class="check"><input type="checkbox" id="elevation-input"> 匯出 GPX 時加入海拔資料</label>
+      <div class="btn-row">
+        <button type="button" class="secondary" id="settings-cancel-btn">取消</button>
+        <button type="submit" id="settings-save-btn">儲存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
