@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "路線地圖規劃",
   "short_name": "路線規劃",
   "description": "手繪路線、自動貼齊道路、合併路段並匯出 GPX 的自行車路線規劃工具",
@@ -10,7 +11,9 @@
   "theme_color": "#2f6fed",
   "lang": "zh-Hant",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

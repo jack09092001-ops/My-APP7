@@ -223,6 +223,21 @@ function findOverlapJoin(out, next) {
 }
 
 // ── Google Roads API ────────────────────────────────
+function roadsErrorMessage(error) {
+  const msg = error.message || error.status || '';
+  const reason = JSON.stringify(error.details || '');
+  if (/referer/i.test(msg) || reason.includes('HTTP_REFERRER_BLOCKED')) {
+    return `Roads API 拒絕了這個網址。請在金鑰的「網站限制」加入 ${location.origin}/*`;
+  }
+  if (reason.includes('SERVICE_BLOCKED') || /not authorized to use this service/i.test(msg)) {
+    return 'Roads API 被金鑰的「API 限制」擋下，請在金鑰的 API 限制中勾選 Roads API。';
+  }
+  if (/has not been used|is disabled/i.test(msg)) {
+    return '此專案尚未啟用 Roads API，請到 Google Cloud Console「API 和服務 → 程式庫」啟用 Roads API。';
+  }
+  return `Roads API 錯誤：${msg}`;
+}
+
 // allowSparse：接縫等短距離用，Roads API 只回傳少數點也接受（兩端點本來就在道路上）
 async function snapToRoads(points, { allowSparse = false } = {}) {
   if (points.length < 2) throw new Error('點數不足');
@@ -235,12 +250,13 @@ async function snapToRoads(points, { allowSparse = false } = {}) {
     const url = `https://roads.googleapis.com/v1/snapToRoads?interpolate=true&path=${encodeURIComponent(path)}&key=${encodeURIComponent(key)}`;
     let data;
     try {
-      const res = await fetch(url);
+      // 瀏覽器預設跨網域只送網域當 Referer；改送完整網址，金鑰限制寫到子路徑（如 /My-APP7/*）也能通過
+      const res = await fetch(url, { referrerPolicy: 'no-referrer-when-downgrade' });
       data = await res.json();
     } catch {
       throw new Error('無法連線到 Roads API，請檢查網路');
     }
-    if (data.error) throw new Error(`Roads API 錯誤：${data.error.message || data.error.status}`);
+    if (data.error) throw new Error(roadsErrorMessage(data.error));
     appendPoints(
       out,
       (data.snappedPoints || []).map((sp) => [sp.location.latitude, sp.location.longitude])
